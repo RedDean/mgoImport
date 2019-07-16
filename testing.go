@@ -2,6 +2,7 @@ package mgoImport
 
 import (
 	"io"
+	"reflect"
 	"testing"
 )
 
@@ -18,5 +19,12 @@ func assertNoError(t *testing.T, err error) {
 
 	if err != nil {
 		t.Fatalf("didn't expect an error but got one, %v", err)
+	}
+}
+
+func assertTwoObjEqual(t *testing.T, got, want interface{}) {
+	t.Helper()
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %v doesn't equal want %v", got, want)
 	}
 }
