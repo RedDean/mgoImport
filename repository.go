@@ -7,16 +7,18 @@ import (
 )
 
 type Repository struct {
+	Db    []map[string]interface{}
 	Properties []Model
 }
 
-//func NewRepository() *Repository {
-//
-//	return &Repository{
-//		Properties: make([]Model,0),
-//	}
-//
-//}
+func NewRepository() *Repository {
+
+	return &Repository{
+		Properties: make([]Model,0),
+		Db: make([]map[string]interface{},0),
+	}
+
+}
 
 func (r *Repository) BuildProperties(cols_name []string, cols_type []string) error {
 
@@ -42,6 +44,7 @@ func (r *Repository) BuildProperties(cols_name []string, cols_type []string) err
 }
 
 func (r Repository) BuildModel(input []string) (map[string]interface{}, error) {
+
 	var err error
 	dataMap := make(map[string]interface{})
 
@@ -52,13 +55,12 @@ func (r Repository) BuildModel(input []string) (map[string]interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-
 	}
-
 	return dataMap, nil
 }
 
 func setDataMapValue(fileType, fieldName, input string, data map[string]interface{}) (map[string]interface{}, error) {
+	//fmt.Println("filetype: ",fileType, ",filename:",fieldName, ", input value:", input)
 	var err error
 	switch fileType {
 	default:

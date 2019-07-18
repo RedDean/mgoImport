@@ -12,12 +12,16 @@ func TestDataParser(t *testing.T) {
 		file := strings.NewReader(`hello
 world
 tdd`)
-		parser := NewDataParser(file)
-
-		got, err := parser.readLine()
+		parser := NewDataParser(file,3)
+		err := parser.readLine()
 		assertNoError(t, err)
 
+
 		want := []string{"hello", "world", "tdd"}
+		got := make([]string,0)
+		for v := range parser.DataCh {
+			got = append(got, v)
+		}
 
 		if !reflect.DeepEqual(got, want) {
 			t.Errorf("got %s , want %s", got, want)
@@ -26,11 +30,11 @@ tdd`)
 
 	t.Run("split csv string into string slice by given delimiter", func(t *testing.T) {
 		file := strings.NewReader("123|456|789\n")
-		parser := NewDataParser(file)
+		parser := NewDataParser(file,1)
 
-		str, _ := parser.readLine()
+		_ = parser.readLine()
 
-		got, err := splitByDelimiter(str[0], "|")
+		got, err := splitByDelimiter(<-parser.DataCh, "|")
 		assertNoError(t, err)
 
 		want := []string{"123", "456", "789"}
@@ -42,15 +46,15 @@ tdd`)
 
 	t.Run("given wrong delimiter", func(t *testing.T) {
 		file := strings.NewReader("123|456|789\n")
-		parser := NewDataParser(file)
+		parser := NewDataParser(file,1)
 
-		str, _ := parser.readLine()
-
-		if _, err := splitByDelimiter(str[0], ""); err == nil {
-			t.Error("expect an error here but got nothing")
+		_ = parser.readLine()
+		str :=  <-parser.DataCh
+		if _, err := splitByDelimiter(str, ""); err == nil {
+			t.Error("empty string ,expect an error here but got nothing")
 		}
 
-		if _, err := splitByDelimiter(str[0], "@@"); err == nil {
+		if _, err := splitByDelimiter(str, "@@"); err == nil {
 			t.Error("expect an error here but got nothing")
 		}
 	})

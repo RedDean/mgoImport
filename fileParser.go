@@ -4,31 +4,40 @@ import (
 	"bufio"
 	"errors"
 	"io"
+	"os"
 	"strings"
 )
 
 type DataParser struct {
 	buf *bufio.Reader
+	DataCh chan string
 }
 
-func NewDataParser(reader io.Reader) *DataParser {
+func InitParser(filedir string, limit int) *DataParser {
+	file, err := os.OpenFile(dir, os.O_RDONLY, 0666)
+	if err != nil {
+		panic(err)
+	}
+	return NewDataParser(file, limit)
+}
+
+func NewDataParser(reader io.Reader,size int) *DataParser {
 	return &DataParser{
 		buf: bufio.NewReader(reader),
+		DataCh: make(chan string, size),
 	}
 }
 
-func (d DataParser) readLine() (ret []string, err error) {
-	var data []byte
-
+func (d *DataParser) readLine()(err error) {
+	defer close(d.DataCh)
 	for {
-		data, _, err = d.buf.ReadLine()
+		data, _, err := d.buf.ReadLine()
 		if err == io.EOF {
 			break
 		}
-		ret = append(ret, string(data))
+		d.DataCh <- string(data)
 	}
-
-	return ret, err
+	return
 }
 
 func splitByDelimiter(str string, deli string) ([]string, error) {
