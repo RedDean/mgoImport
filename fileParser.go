@@ -11,20 +11,22 @@ import (
 type DataParser struct {
 	buf *bufio.Reader
 	DataCh chan string
+	deli string
 }
 
-func InitParser(filedir string, limit int) *DataParser {
+func InitParser(filedir string, limit int, deli string) *DataParser {
 	file, err := os.OpenFile(dir, os.O_RDONLY, 0666)
 	if err != nil {
 		panic(err)
 	}
-	return NewDataParser(file, limit)
+	return NewDataParser(file, limit,deli)
 }
 
-func NewDataParser(reader io.Reader,size int) *DataParser {
+func NewDataParser(reader io.Reader,size int, deli string) *DataParser {
 	return &DataParser{
 		buf: bufio.NewReader(reader),
 		DataCh: make(chan string, size),
+		deli :deli,
 	}
 }
 

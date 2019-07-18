@@ -12,14 +12,17 @@ type Mgr struct {
 	workerSize int
 }
 
-func NewMgr(p *DataParser,repository *Repository, workerSize int){
-
+func NewMgr(p *DataParser,repository *Repository, workerSize int) *Mgr {
+	return &Mgr{
+		parser:p,
+		repo:repository,
+		workerSize:workerSize,
+	}
 }
 
 func (m *Mgr) Run()  {
 
 	wg := new(sync.WaitGroup)
-	ch := make(chan map[string]interface{},  10)
 
 	go func() {
 		if err := m.parser.readLine(); err != nil {
@@ -29,36 +32,29 @@ func (m *Mgr) Run()  {
 
 	wg.Add(m.workerSize)
 	for i := 0; i < m.workerSize; i++ {
-		go m.process(wg,ch)
+		go m.process(wg)
 	}
 	wg.Wait()
-	close(ch)
-
-	for v := range ch {
-		fmt.Println(v)
-
-		// save operation
-		m.repo.Db = append(m.repo.Db, v)
-	}
 
 }
 
-func (m *Mgr) process(wg *sync.WaitGroup, dataCh chan map[string]interface{})  {
+func (m *Mgr) process(wg *sync.WaitGroup, deli string)  {
 	defer wg.Done()
 	for value := range m.parser.DataCh {
-		if strArr,err := splitByDelimiter(value,"|");err != nil {
+		if strArr,err := splitByDelimiter(value,deli);err != nil {
 			fmt.Printf("split err: %v", err)
 			continue
 		}else {
-			m.importData(strArr,dataCh)
+			m.importData(strArr)
 		}
 	}
 }
 
-func (m *Mgr) importData(dataArr []string, ch chan map[string]interface{})  {
+func (m *Mgr) importData(dataArr []string)  {
 	if model, err := m.repo.BuildModel(dataArr); err != nil {
 		fmt.Printf("build model err %v \n", err)
 	}else {
-		ch <- model
+		// todo
+		model = model
 	}
 }

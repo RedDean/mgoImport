@@ -1,6 +1,7 @@
 package main
 
 import (
+	"gopkg.in/alecthomas/kingpin.v2"
 	"mgoImport"
 )
 
@@ -22,20 +23,22 @@ TODO:
     4. import different model flexibly by using configurable file
 */
 
+var (
+	configDir = kingpin.Flag("config","config file directory").Default("./config.json").String()
+	// set a limitation
+	parseLimitation = kingpin.Flag("limit","limitation while parsing file").Default("500").Int()
+)
+
 func main() {
 
+	kingpin.Version("0.0.1")
+	kingpin.Parse()
+
 	// config.json
-	config := mgoImport.InitConfig("")
+	config := mgoImport.InitConfig(*configDir)
+	parser := mgoImport.InitParser("",0,config.Delimiter)
+	repo := &mgoImport.Repository{}
 
-
-	parser := mgoImport.InitParser("",0)
-
-
-
-	mgr := mgoImport.Mgr{
-    		parser:parser,
-
-	}
-
+	mgr := mgoImport.NewMgr(parser,repo, 0)
 	mgr.Run()
 }
