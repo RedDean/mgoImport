@@ -1,5 +1,26 @@
 {
-  "data_columns": ["name","age","tel"],
-  "data_type": ["string","int","string"],
-  "delimiter": "|"
+  "data_columns": [
+    "originalId",
+    "created_time",
+    "updated_time",
+    "is_test_account",
+    "payload"
+  ],
+
+  "data_types": ["int","date","date","bool","json"],
+
+  "": "csv delimiter",
+  "delimiter": "|",
+
+  "db": {
+    "url": "mongodb://localhost",
+    "name": "djh",
+    "collection": "company"
+  },
+
+  "": "由于json.unmarshal方法不是很灵活，添加一个json type字段用于处理json中的指定类型",
+  "json_field": {
+    "gameCount": "int",
+    "activeGameCount": "int"
+  }
 }

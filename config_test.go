@@ -18,11 +18,10 @@ func TestConfigFile(t *testing.T) {
 			t.Fatalf("load json err: %v", err)
 		}
 
-		got := cf
-		want := &ConfigFile{
-			[]string{"name", "age", "tel"},
-			[]string{"string", "int", "string"},
-			"|",
+		got := cf.JsonField
+		want := map[string]string{
+			"gameCount":       "int",
+			"activeGameCount": "int",
 		}
 		if !reflect.DeepEqual(got, want) {
 			t.Errorf("got %v , want %v", got, want)

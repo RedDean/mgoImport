@@ -15,7 +15,7 @@ func TestRepository(t *testing.T) {
 	t.Run("build properties map", func(t *testing.T) {
 
 		got := &Repository{}
-		err := got.BuildProperties([]string{"age", "name"}, []string{"int", "string"})
+		err := got.buildProperties([]string{"age", "name"}, []string{"int", "string"})
 		assertNoError(t, err)
 
 		want := &Repository{
@@ -37,7 +37,7 @@ func TestRepository(t *testing.T) {
 	t.Run("build mongo model", func(t *testing.T) {
 
 		repo := &Repository{}
-		err1 := repo.BuildProperties([]string{"name", "number", "payload"}, []string{"string", "int", "json"})
+		err1 := repo.buildProperties([]string{"name", "number", "payload"}, []string{"string", "int", "json"})
 		assertNoError(t, err1)
 
 		input := []string{"harden", "13", "{\"team\":\"H-town\"}"}

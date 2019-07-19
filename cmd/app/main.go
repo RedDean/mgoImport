@@ -24,9 +24,11 @@ TODO:
 */
 
 var (
-	configDir = kingpin.Flag("config","config file directory").Default("./config.json").String()
-	// set a limitation
-	parseLimitation = kingpin.Flag("limit","limitation while parsing file").Default("500").Int()
+	configDir = kingpin.Flag("config", "config file directory").Required().String()
+	fileDir   = kingpin.Flag("file", "csv file directory").Required().String()
+
+	limitation = kingpin.Flag("limit", "channel size limitation while parsing file").Default("500").Int()
+	size       = kingpin.Flag("size", "number of processing data goroutines").Default("5").Int()
 )
 
 func main() {
@@ -34,11 +36,22 @@ func main() {
 	kingpin.Version("0.0.1")
 	kingpin.Parse()
 
-	// config.json
-	config := mgoImport.InitConfig(*configDir)
-	parser := mgoImport.InitParser("",0,config.Delimiter)
-	repo := &mgoImport.Repository{}
+	c := mgoImport.InitConfig(*configDir)
 
-	mgr := mgoImport.NewMgr(parser,repo, 0)
+	p, err := mgoImport.InitParser(*fileDir, *limitation, c.Delimiter)
+	if err != nil {
+		panic(err)
+	}
+	//fmt.Println(c)
+
+	r := mgoImport.InitRepository(c)
+
+	if err := mgoImport.InitMgoCli(c.Db.Url); err != nil {
+		panic(err)
+	}
+	defer mgoImport.Close()
+
+	mgr := mgoImport.NewMgr(p, r, *size)
+
 	mgr.Run()
 }
