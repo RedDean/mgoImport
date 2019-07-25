@@ -53,10 +53,12 @@ func (d *DataParser) readLine() (err error) {
 			continue
 		}
 		d.DataCh <- strings.Split(string(data), d.deli)
+
 		if counter == 1000 {
 			counter = 0
-			fmt.Println("已处理1000条记录！")
+			fmt.Println("[INFO] 已处理1000条记录！")
 		}
+		counter++
 	}
 	return
 }

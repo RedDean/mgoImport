@@ -25,7 +25,7 @@ func (m *Mgr) Run() {
 
 	wg := new(sync.WaitGroup)
 
-	fmt.Println("开始处理！")
+	fmt.Println("[INFO] 开始处理！")
 	fmt.Println(strings.Repeat("-", 20))
 	go func() {
 		if err := m.parser.readLine(); err != nil {
@@ -39,14 +39,14 @@ func (m *Mgr) Run() {
 	}
 	wg.Wait()
 
-	fmt.Println("导数完成")
+	fmt.Println("[INFO] 导数完成")
 }
 
 func (m *Mgr) process(wg *sync.WaitGroup, deli string) {
 	defer wg.Done()
 	for value := range m.parser.DataCh {
 		if model, err := m.repo.BuildModel(value); err != nil {
-			fmt.Printf("build model err %v \n", err)
+			fmt.Printf("[ERROR] build model err %v \n", err)
 		} else {
 			insert(model, m.repo.DbName, m.repo.Collection)
 		}
@@ -57,6 +57,6 @@ func insert(model map[string]interface{}, dbName, collection string) {
 	session := getDb()
 	defer session.Close()
 	if err := session.DB(dbName).C(collection).Insert(model); err != nil {
-		fmt.Printf("insert err :%v ", err)
+		fmt.Printf("[ERROR] insert err :%v ", err)
 	}
 }

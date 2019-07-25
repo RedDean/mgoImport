@@ -24,7 +24,7 @@ type DbConfig struct {
 }
 
 func InitConfig(dir string) *ConfigFile {
-	fmt.Printf("config dir is %s \n", dir)
+	fmt.Printf("[INFO] config dir is %s \n", dir)
 	file, err := os.OpenFile(dir, os.O_RDONLY, 0666)
 	if err != nil {
 		panic(err)

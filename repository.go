@@ -39,14 +39,12 @@ func (r *Repository) buildProperties(cols_name []string, cols_type []string) err
 		return errors.New("given colName || colType slice is nil")
 	}
 
-	var i int // index
-
 	if len(cols_name) != len(cols_type) {
 		return errors.New("length of cols_name doesn't equal length of cols_type")
 	}
 
 	r.Properties = make([]Model, len(cols_name))
-	for ; i < len(cols_name); i++ {
+	for i:=0 ; i < len(cols_name); i++ {
 		r.Properties[i] = Model{
 			FieldType: cols_type[i],
 			FieldName: cols_name[i],
@@ -136,6 +134,8 @@ func decodeJsonInterface(i interface{}) string {
 	case "float64": // json中数值类型默认转成float，当指定json类型时一般是将数值类型转成int，因此此处将其先转成int类型
 		f := vv.Float()
 		ret = fmt.Sprintf("%d", int(f))
+	default:
+		ret = vv.String()
 	}
 
 	return ret
