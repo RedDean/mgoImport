@@ -54,23 +54,23 @@ func TestRepository(t *testing.T) {
 		assertTwoObjEqual(t, got, want)
 	})
 
-	//t.Run("insert model", func(t *testing.T) {
-	//
-	//	repo := &Repository{}
-	//	err1 := repo.BuildProperties([]string{"name", "number", "payload"}, []string{"string", "int", "json"})
-	//	assertNoError(t, err1)
-	//
-	//	input := []string{"harden", "13", "{\"team\":\"H-town\",\"age\":29}"}
-	//	data, err2 := repo.BuildModel(input)
-	//	assertNoError(t, err2)
-	//
-	//	if err := repo.InsertData(data); err != nil {
-	//		assertNoError(t,err)
-	//	}
-	//
-	//	got := repo.GetData()
-	//
-	//
-	//})
+	/*t.Run("insert model", func(t *testing.T) {
+
+		repo := &Repository{}
+		err1 := repo.buildProperties([]string{"name", "number", "payload"}, []string{"string", "int", "json"})
+		assertNoError(t, err1)
+
+		input := []string{"harden", "13", "{\"team\":\"H-town\",\"age\":29}"}
+		data, err2 := repo.BuildModel(input)
+		assertNoError(t, err2)
+
+		if err := repo.insertData(data); err != nil {
+			assertNoError(t,err)
+		}
+
+		got := repo.GetData()
+
+
+	})*/
 
 }

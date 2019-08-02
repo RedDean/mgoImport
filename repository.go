@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -14,6 +15,12 @@ type Repository struct {
 	DbName     string
 	Collection string
 	Properties []Model
+}
+
+type dataModel struct {
+	inner_json_cnt  int
+	inner_json_type []string
+	_map            map[string]interface{}
 }
 
 func InitRepository(c *ConfigFile) *Repository {
@@ -44,7 +51,7 @@ func (r *Repository) buildProperties(cols_name []string, cols_type []string) err
 	}
 
 	r.Properties = make([]Model, len(cols_name))
-	for i:=0 ; i < len(cols_name); i++ {
+	for i := 0; i < len(cols_name); i++ {
 		r.Properties[i] = Model{
 			FieldType: cols_type[i],
 			FieldName: cols_name[i],
@@ -56,71 +63,135 @@ func (r *Repository) buildProperties(cols_name []string, cols_type []string) err
 
 func (r Repository) BuildModel(input []string) (map[string]interface{}, error) {
 
-	var err error
-	dataMap := make(map[string]interface{})
+	defer func() {
+		if rc := recover(); rc != nil {
+			fmt.Printf("[DEBUG] recordId:%s input: %d, props: %d ,maybe data syntx has wrong type! \n", input[0], len(input), len(r.Properties))
+		}
+	}()
+
+	var (
+		err     error
+		dataMap dataModel
+	)
+
+	dataMap._map = make(map[string]interface{})
 
 	for i := range input {
 		inputVal := input[i]
 		props := r.Properties[i]
-		dataMap, err = setDataMapValue(props.FieldType, props.FieldName, inputVal, dataMap)
-		if err != nil {
+		if err = dataMap.setDataMapValue(props.FieldType, props.FieldName, inputVal); err != nil {
 			return nil, err
 		}
 	}
 
 	// reset json field type
 	for fName, fType := range r.JsonField {
-		dataMap, err = setDataMapValue(fType, fName, decodeJsonInterface(dataMap[fName]), dataMap)
-		if err != nil {
+		if err = dataMap.setDataMapValue(fType, fName, decodeJsonInterface(dataMap._map[fName])); err != nil {
 			return nil, err
 		}
 	}
 
-	return dataMap, nil
+	return dataMap._map, nil
 }
 
-func setDataMapValue(fileType, fieldName, input string, data map[string]interface{}) (map[string]interface{}, error) {
+func (dm *dataModel) setDataMapValue(fileType, fieldName, input string) error {
 	var err error
 	switch fileType {
 	default:
 		// string
-		data[fieldName] = input
+		dm._map[fieldName] = input
 
 	case "int":
 		var val int
 		if input == "" {
-			data[fieldName] = 0
-			return data, nil
+			dm._map[fieldName] = 0
+			return nil
 		}
 
 		val, err = strconv.Atoi(input)
 		if err != nil {
-			return data, err
+			return err
 		}
-		data[fieldName] = val
+		dm._map[fieldName] = val
 
 	case "json":
+		if input == "" {
+			return nil
+		}
 		m := make(map[string]interface{})
 		err = json.Unmarshal([]byte(input), &m)
+		if err != nil {
+			fmt.Printf("[DEBUG] input string:%s ,err:%v \n", input, err)
+		}
 		// merge json field into data map
 		for k, v := range m {
-			data[k] = v
+			dm._map[k] = v
 		}
 
 	case "date":
 		var t time.Time
 		t, err = time.Parse("2006-01-02 15:04:05+00", input)
-		data[fieldName] = t
+		dm._map[fieldName] = t
 
 	case "bool":
 		var b bool
 		if input == "t" {
 			b = true
 		}
-		data[fieldName] = b
+		dm._map[fieldName] = b
+
+	case "nested-json":
+		m := make(map[string]interface{})
+		err = json.Unmarshal([]byte(input), &m)
+		dm._map[fieldName] = m
+
+	case "[]string":
+		dm._map[fieldName] = splitStr(input)
+
+	case "[]int":
+		strArr := splitStr(input)
+		if len(strArr) == 0 {
+			dm._map[fieldName] = []int{}
+			return nil
+		}
+		retArr := make([]int, len(strArr))
+		for key := range strArr {
+			v := strArr[key]
+			if vv, err := strconv.Atoi(v); err != nil {
+				return err
+			} else {
+				retArr[key] = vv
+			}
+		}
+		dm._map[fieldName] = retArr
+		return nil
+
 	}
 
-	return data, err
+	return err
+}
+
+func (dm *dataModel) getInnerJsonType() string {
+	var idx int
+	if dm.inner_json_type == nil || len(dm.inner_json_type) == 0 {
+		return ""
+	}
+	if dm.inner_json_cnt > len(dm.inner_json_type)-1 {
+		return ""
+	}
+	idx = dm.inner_json_cnt
+	dm.inner_json_cnt++
+
+	return dm.inner_json_type[idx]
+}
+
+func splitStr(input string) []string {
+	var ret []string
+	if strings.TrimSpace(input) == "" { // psql 字段为null值
+		return ret
+	}
+	input = input[1 : len(input)-1]
+	return strings.Split(input, ",")
 }
 
 func decodeJsonInterface(i interface{}) string {

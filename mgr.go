@@ -46,9 +46,12 @@ func (m *Mgr) process(wg *sync.WaitGroup, deli string) {
 	defer wg.Done()
 	for value := range m.parser.DataCh {
 		if model, err := m.repo.BuildModel(value); err != nil {
-			fmt.Printf("[ERROR] build model err %v \n", err)
+			//fmt.Printf("[ERROR] build model err: %v \n", err)
+			continue
 		} else {
-			insert(model, m.repo.DbName, m.repo.Collection)
+			if len(model) != 0 {
+				insert(model, m.repo.DbName, m.repo.Collection)
+			}
 		}
 	}
 }
