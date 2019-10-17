@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"gopkg.in/mgo.v2/bson"
 	"reflect"
 	"strconv"
 	"strings"
@@ -15,6 +16,8 @@ type Repository struct {
 	DbName     string
 	Collection string
 	Properties []Model
+
+	ModifiedColumn string
 }
 
 type dataModel struct {
@@ -23,11 +26,24 @@ type dataModel struct {
 	_map            map[string]interface{}
 }
 
-func InitRepository(c *ConfigFile) *Repository {
+func InitRepository(c *ConfigFile, mode int) *Repository {
 	repo := NewRepository(c.Db.Name, c.Db.Collection, c.JsonField)
-	if err := repo.buildProperties(c.DataColumns, c.DataTypes); err != nil {
-		panic(err)
+
+	switch mode {
+	default:
+		fmt.Printf("[ERROR] can't match program's mode type: %d while initliaze repository component! \n", mode)
+	case NORMAL, ITEM:
+		if err := repo.buildProperties(c.DataColumns, c.DataTypes); err != nil {
+			panic(err)
+		}
+	case MODIFY:
+		if c.ModifiedColumn != "" {
+			repo.ModifiedColumn = c.ModifiedColumn
+		} else {
+			panic(fmt.Errorf("[ERROR] column name is required! plz check configure file"))
+		}
 	}
+
 	return repo
 }
 
@@ -92,6 +108,60 @@ func (r Repository) BuildModel(input []string) (map[string]interface{}, error) {
 	}
 
 	return dataMap._map, nil
+}
+
+func (r Repository) BuildItemModel(input []string) (map[string]interface{}, error) {
+
+	defer func() {
+		if rc := recover(); rc != nil {
+			fmt.Printf("[DEBUG] recordId:%s input: %d, props: %d ,maybe data syntx has wrong type! \n", input[0], len(input), len(r.Properties))
+		}
+	}()
+
+	var (
+		err     error
+		dataMap dataModel
+	)
+
+	dataMap._map = make(map[string]interface{})
+
+	for i := range input {
+		inputVal := input[i]
+		props := r.Properties[i]
+
+		//if "description" == props.FieldName {
+		//	// correct quote in string
+		//	if "" != inputVal {
+		//		inputVal = inputVal[2:len(inputVal)-2]
+		//		inputVal = strings.ReplaceAll(inputVal, `"`,`\"`)
+		//	}
+		//}
+
+		if err = dataMap.setDataMapValue(props.FieldType, props.FieldName, inputVal); err != nil {
+			return nil, err
+		}
+	}
+
+	// reset json field type
+	for fName, fType := range r.JsonField {
+		if err = dataMap.setDataMapValue(fType, fName, decodeJsonInterface(dataMap._map[fName])); err != nil {
+			return nil, err
+		}
+	}
+
+	return dataMap._map, nil
+}
+
+func (r Repository) BuildModifyModel(input string) map[string]interface{} {
+
+	//data := input[3:len(input)-3]
+	// todo
+
+	return bson.M{
+		"$set": bson.M{
+			r.ModifiedColumn: input[3 : len(input)-3],
+		},
+	}
 }
 
 func (dm *dataModel) setDataMapValue(fileType, fieldName, input string) error {
@@ -210,4 +280,75 @@ func decodeJsonInterface(i interface{}) string {
 	}
 
 	return ret
+}
+
+var G_item_rebuild_func_map = map[string]func(map[string]interface{}) map[string]interface{}{
+
+	"APP": func(i map[string]interface{}) map[string]interface{} {
+
+		bin, ok := i["binaries"].(map[string]interface{})
+		if ok {
+			i["binaries"] = resetBinaries(bin)
+		}
+
+		delete(i, "consumable")
+		return i
+	},
+
+	"IAP": func(i map[string]interface{}) map[string]interface{} {
+		delete(i, "packageName")
+		delete(i, "categories")
+		delete(i, "binaries")
+		return i
+	},
+}
+
+func resetBinaries(bin map[string]interface{}) interface{} {
+	ext := bin["extensions"].(map[string]interface{})
+	for key, value := range ext {
+		if strings.HasSuffix(key, "apks") {
+			bin[key] = resetApks(value.(map[string]interface{}))
+		} else {
+			// move field in 'extensions' to 'binaries'
+			bin[key] = value
+		}
+	}
+
+	delete(bin, "extensions")
+	return bin
+}
+
+func resetApks(apk map[string]interface{}) []interface{} {
+	if apk == nil {
+		return nil
+	}
+
+	var apkSlice []interface{}
+
+	for key, value := range apk {
+		v := value.(map[string]interface{})
+		v["versionCode"] = key
+		apkSlice = append(apkSlice, v)
+	}
+
+	return apkSlice
+}
+
+func resetChannels(channels map[string]interface{}) interface{} {
+	//ext := channels["extensions"]
+	if channels == nil {
+		return channels
+	}
+
+	for ck, value := range channels {
+		ch := value.(map[string]interface{})
+		ext := ch["extensions"].(map[string]interface{})
+		for ek, ev := range ext {
+			ch[ek] = ev
+		}
+		delete(ch, "extensions")
+		channels[ck] = ch
+	}
+
+	return channels
 }

@@ -15,7 +15,7 @@ type DataParser struct {
 	deli   string
 }
 
-func InitParser(fileDir string, limit int, deli string) (*DataParser, error) {
+func InitParser(fileDir string, limit int, deli string, readerSize int) (*DataParser, error) {
 	file, err := os.OpenFile(fileDir, os.O_RDONLY, 0666)
 	if err != nil {
 		panic(err)
@@ -29,13 +29,13 @@ func InitParser(fileDir string, limit int, deli string) (*DataParser, error) {
 		return nil, errors.New("delimiter size greater than one byte")
 	}
 
-	return NewDataParser(file, limit, deli), nil
+	return NewDataParser(file, limit, deli, readerSize), nil
 }
 
-func NewDataParser(reader io.Reader, size int, deli string) *DataParser {
+func NewDataParser(reader io.Reader, size int, deli string, readerSize int) *DataParser {
 
 	return &DataParser{
-		buf:    bufio.NewReader(reader),
+		buf:    bufio.NewReaderSize(reader, readerSize),
 		DataCh: make(chan []string, size),
 		deli:   deli,
 	}
@@ -49,7 +49,7 @@ func (d *DataParser) readLine() (err error) {
 		if err == io.EOF {
 			break
 		}
-		if data == nil || len(data) == 0 {
+		if len(data) == 0 {
 			continue
 		}
 		d.DataCh <- strings.Split(string(data), d.deli)

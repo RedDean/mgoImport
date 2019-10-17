@@ -19,7 +19,7 @@ func TestMgr(t *testing.T) {
 		2,
 	}
 
-	mgr.Run()
+	mgr.Run(1)
 
 	got := database.DbName
 	want := []map[string]interface{}{

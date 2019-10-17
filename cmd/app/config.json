@@ -1,13 +1,7 @@
 {
-  "data_columns": [
-    "originalId",
-    "created_time",
-    "updated_time",
-    "is_test_account",
-    "payload"
-  ],
+  "data_columns": ["originalId","OriginalItemId","product_id","category_id","type",   "deleted","status","owner_id","created_time","updated_time","categories","master_item_slug","payload"],
 
-  "data_types": ["int","date","date","bool","json"],
+  "data_types": ["int",        "int",            "string",    "string"     ,"string", "bool",   "string","string"  ,"date"        ,"date"        ,"[]string"  ,"string"          ,"json"   ],
 
   "": "csv delimiter",
   "delimiter": "|",
@@ -15,12 +9,15 @@
   "db": {
     "url": "mongodb://localhost",
     "name": "djh",
-    "collection": "company"
+    "collection": "666"
   },
 
   "": "由于json.unmarshal方法不是很灵活，添加一个json type字段用于处理json中的指定类型",
   "json_field": {
-    "gameCount": "int",
-    "activeGameCount": "int"
-  }
+    "revision":  "int",
+    "consumable": "bool"
+  },
+
+  "":"单独处理某些特殊字符的字段",
+  "modified_column": ""
 }

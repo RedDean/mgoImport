@@ -15,6 +15,8 @@ type ConfigFile struct {
 	Delimiter   string            `json:"delimiter"`
 	Db          DbConfig          `json:"db"`
 	JsonField   map[string]string `json:"json_field"`
+
+	ModifiedColumn string `json:"modified_column"`
 }
 
 type DbConfig struct {

@@ -33,3 +33,8 @@ func TestDb(s *mgo.Session) bool {
 	}
 	return true
 }
+
+var G_ItemCollectionMap = map[string]string{
+	"APP": "udp_item_app",
+	"IAP": "udp_item_iap",
+}

@@ -24,11 +24,14 @@ TODO:
 */
 
 var (
-	configDir = kingpin.Flag("config", "config file directory").Required().String()
-	fileDir   = kingpin.Flag("file", "csv file directory").Required().String()
+	configDir           = kingpin.Flag("config", "config file directory").Required().String()
+	fileDir             = kingpin.Flag("file", "csv file directory").Required().String()
+	isModifyFieldsModel = kingpin.Flag("modify", "modify some filed in mongo").Default("false").Bool()
+	isItem              = kingpin.Flag("item", "import item data specially").Bool()
 
-	limitation = kingpin.Flag("limit", "channel size limitation while parsing file").Default("500").Int()
-	size       = kingpin.Flag("size", "number of processing data goroutines").Default("5").Int()
+	limitation = kingpin.Flag("limit", "channel size limitation while parsing file").Default("600").Int()
+	size       = kingpin.Flag("size", "number of processing data goroutines").Default("6").Int()
+	readerSize = kingpin.Flag("readerSize", "number of processing data goroutines").Default("4096").Int()
 )
 
 func main() {
@@ -38,13 +41,13 @@ func main() {
 
 	c := mgoImport.InitConfig(*configDir)
 
-	p, err := mgoImport.InitParser(*fileDir, *limitation, c.Delimiter)
+	p, err := mgoImport.InitParser(*fileDir, *limitation, c.Delimiter, *readerSize)
 	if err != nil {
 		panic(err)
 	}
 	//fmt.Println(c)
 
-	r := mgoImport.InitRepository(c)
+	r := mgoImport.InitRepository(c, getMode())
 
 	if err := mgoImport.InitMgoCli(c.Db.Url); err != nil {
 		panic(err)
@@ -53,5 +56,15 @@ func main() {
 
 	mgr := mgoImport.NewMgr(p, r, *size)
 
-	mgr.Run()
+	mgr.Run(getMode())
+}
+
+func getMode() int {
+	if *isModifyFieldsModel {
+		return mgoImport.MODIFY
+	} else if *isItem {
+		return mgoImport.ITEM
+	} else {
+		return mgoImport.NORMAL
+	}
 }

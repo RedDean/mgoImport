@@ -58,4 +58,24 @@ func TestMgoCli(t *testing.T) {
 		assertNoError(t, err)
 	})
 
+	t.Run("query empty object,check what it is", func(t *testing.T) {
+		cli := getDb()
+		defer cli.Close()
+
+		type Foo struct {
+			Name string
+		}
+
+		/*data := map[string]interface{}{
+			"name":   "harden",
+			"number": 13,
+			"team":   "H-town",
+		}*/
+
+		var foo *Foo
+		err := cli.DB("djh").C("test_query").Find(bson.M{"Name": "123"}).All(foo)
+		t.Logf("foo : %v", foo)
+
+		assertNoError(t, err)
+	})
 }
