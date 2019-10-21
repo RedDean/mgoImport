@@ -1,6 +1,6 @@
 package mgoImport
 
-// program mode
+// program import mode
 const (
 	NORMAL = iota
 	MODIFY

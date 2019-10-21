@@ -128,7 +128,7 @@ func (m *Mgr) itemImport(wg *sync.WaitGroup) {
 }
 
 func insert(model map[string]interface{}, dbName, collection string) {
-	session := getDb()
+	session := GetDb()
 	defer session.Close()
 	if err := session.DB(dbName).C(collection).Insert(model); err != nil {
 		fmt.Printf("[ERROR] insert err :%v ", err)
@@ -136,7 +136,7 @@ func insert(model map[string]interface{}, dbName, collection string) {
 }
 
 func modify(id string, model map[string]interface{}, dbName, collection string) {
-	session := getDb()
+	session := GetDb()
 	defer session.Close()
 	val, err := strconv.Atoi(id)
 	if err != nil {

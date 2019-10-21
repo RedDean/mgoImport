@@ -1,6 +1,7 @@
 package mgoImport
 
 import (
+	"mgoImport/testUtil"
 	"reflect"
 	"strings"
 	"testing"
@@ -14,7 +15,7 @@ world
 tdd`)
 		parser := NewDataParser(file, 3, "|")
 		err := parser.readLine()
-		assertNoError(t, err)
+		testUtil.AssertNoError(t, err)
 
 		want := []string{"hello", "world", "tdd"}
 		got := make([][]string, 0)
@@ -34,7 +35,7 @@ tdd`)
 	//	_ = parser.readLine()
 	//
 	//	got, err := parser.splitByDelimiter(<-parser.DataCh, "|")
-	//	assertNoError(t, err)
+	//	AssertNoError(t, err)
 	//
 	//	want := []string{"123", "456", "789"}
 	//

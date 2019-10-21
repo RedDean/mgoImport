@@ -1,4 +1,4 @@
-package mgoImport
+package testUtil
 
 import (
 	"io"
@@ -10,7 +10,7 @@ import (
    common testing helper function
 */
 
-func assertNoError(t *testing.T, err error) {
+func AssertNoError(t *testing.T, err error) {
 	t.Helper()
 
 	if err == io.EOF {
@@ -22,7 +22,7 @@ func assertNoError(t *testing.T, err error) {
 	}
 }
 
-func assertTwoObjEqual(t *testing.T, got, want interface{}) {
+func AssertTwoObjEqual(t *testing.T, got, want interface{}) {
 	t.Helper()
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v doesn't equal want %v", got, want)

@@ -6,14 +6,16 @@ import (
 )
 
 var G_session *mgo.Session
+var G_DBname string
 
-func InitMgoCli(url string) error {
+func InitMgoCli(url string, dbName string) error {
 
 	//mongdbUrl = fmt.Sprintf("mongodb://%s:%s@%s", username, password, Url)
 	if cli, err := mgo.Dial(url); err != nil {
 		return err
 	} else {
 		G_session = cli
+		G_DBname = dbName
 	}
 	return nil
 }
@@ -22,7 +24,7 @@ func Close() {
 	G_session.Close()
 }
 
-func getDb() *mgo.Session {
+func GetDb() *mgo.Session {
 	return G_session.Copy()
 }
 

@@ -1,6 +1,7 @@
 package mgoImport
 
 import (
+	"mgoImport/testUtil"
 	"os"
 	"reflect"
 	"testing"
@@ -12,7 +13,7 @@ func TestConfigFile(t *testing.T) {
 		dir := "./cmd/app/config.json"
 
 		file, err := os.OpenFile(dir, os.O_RDONLY, 0666)
-		assertNoError(t, err)
+		testUtil.AssertNoError(t, err)
 
 		if err := cf.LoadJson(file); err != nil {
 			t.Fatalf("load json err: %v", err)

@@ -1,6 +1,7 @@
 package mgoImport
 
 import (
+	"mgoImport/testUtil"
 	"strings"
 	"testing"
 )
@@ -33,6 +34,6 @@ func TestMgr(t *testing.T) {
 		},
 	}
 
-	assertTwoObjEqual(t, got, want)
+	testUtil.AssertTwoObjEqual(t, got, want)
 
 }
