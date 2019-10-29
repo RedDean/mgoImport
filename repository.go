@@ -27,12 +27,14 @@ type dataModel struct {
 }
 
 func InitRepository(c *ConfigFile, mode int) *Repository {
+	fmt.Println("[DEBUG] dbname:", c.Db.Name)
 	repo := NewRepository(c.Db.Name, c.Db.Collection, c.JsonField)
 
 	switch mode {
 	default:
 		fmt.Printf("[ERROR] can't match program's mode type: %d while initliaze repository component! \n", mode)
-	case NORMAL, ITEM:
+		panic(errors.New("wrong mode type"))
+	case NORMAL, ITEM, ITEM_HIS:
 		if err := repo.buildProperties(c.DataColumns, c.DataTypes); err != nil {
 			panic(err)
 		}
@@ -195,7 +197,11 @@ func (dm *dataModel) setDataMapValue(fileType, fieldName, input string) error {
 		}
 		// merge json field into data map
 		for k, v := range m {
-			dm._map[k] = v
+
+			// In case that field in json override filed that has same name in dataMap.
+			if _, ok := dm._map[k]; !ok {
+				dm._map[k] = v
+			}
 		}
 
 	case "date":
@@ -212,7 +218,9 @@ func (dm *dataModel) setDataMapValue(fileType, fieldName, input string) error {
 
 	case "nested-json":
 		m := make(map[string]interface{})
-		err = json.Unmarshal([]byte(input), &m)
+		if input != "" {
+			err = json.Unmarshal([]byte(input), &m)
+		}
 		dm._map[fieldName] = m
 
 	case "[]string":
@@ -292,6 +300,7 @@ var G_item_rebuild_func_map = map[string]func(map[string]interface{}) map[string
 		}
 
 		delete(i, "consumable")
+		delete(i, "masterItemSlug")
 		return i
 	},
 

@@ -1,19 +1,19 @@
 {
-  "data_columns": ["originalId","OriginalItemId","product_id","category_id","type",   "deleted","status","owner_id","created_time","updated_time","categories","master_item_slug","payload"],
+  "data_columns": ["originalId","originalItemId","productId","categoryId","type",   "deleted","status","ownerId","createdTime","updatedTime","categories","masterItemSlug","payload"],
 
-  "data_types": ["int",        "int",            "string",    "string"     ,"string", "bool",   "string","string"  ,"date"        ,"date"        ,"[]string"  ,"string"          ,"json"   ],
+  "data_types": ["int",        "string",            "string",    "string"     ,"string", "bool",   "string","string"  ,"date"        ,"date"        ,"[]string"  ,"string"          ,"json"   ],
 
   "": "csv delimiter",
   "delimiter": "|",
 
   "db": {
     "url": "mongodb://localhost",
-    "name": "djh",
+    "name": "djh-test",
     "collection": "666"
   },
 
   "id": {
-    "": "(no need to use this in self)",
+    "": "(no need to use this in self mode)",
     "id_column":"id",
 
     "": "use this to join table, eg:originalItemId",

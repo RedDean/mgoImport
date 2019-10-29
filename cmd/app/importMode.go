@@ -21,6 +21,8 @@ func getImportMode() int {
 		return mgoImport.MODIFY
 	} else if *isItem {
 		return mgoImport.ITEM
+	} else if *isItemHis {
+		return mgoImport.ITEM_HIS
 	} else {
 		return mgoImport.NORMAL
 	}

@@ -16,6 +16,8 @@ func InitMgoCli(url string, dbName string) error {
 	} else {
 		G_session = cli
 		G_DBname = dbName
+
+		G_session.SetPoolLimit(50)
 	}
 	return nil
 }
@@ -39,4 +41,9 @@ func TestDb(s *mgo.Session) bool {
 var G_ItemCollectionMap = map[string]string{
 	"APP": "udp_item_app",
 	"IAP": "udp_item_iap",
+}
+
+var G_ItemCollection_His_Map = map[string]string{
+	"APP": "udp_item_app_history",
+	"IAP": "udp_item_iap_history",
 }

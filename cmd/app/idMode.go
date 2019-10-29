@@ -14,7 +14,7 @@ const (
 	MULTI_REPLACE
 )
 
-const WORKERNUM = 3
+const WORKERNUM = 1
 
 func changeIDMode(conf *mgoImport.ConfigFile) {
 	var (

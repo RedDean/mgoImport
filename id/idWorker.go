@@ -5,6 +5,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"mgoImport"
 	"sync"
+	"time"
 )
 
 type IDWorker struct {
@@ -27,10 +28,18 @@ func (w IDWorker) Do(dataCh <-chan interface{}, swg *sync.WaitGroup) {
 			return
 		}
 
-		if err := w.updateID(data.(string)); err != nil {
-			fmt.Printf("[ERROR] error : %v ouccred when update id: %s", err, data.(string))
-			continue
+		// There will be some god damn socket errors in my local environment.
+		// Maybe it related to docker configure or concurrency.
+		// Retry 3 times when capture error.
+		for i := 1; i <= 3; i++ {
+			if err := w.updateID(data.(string)); err == nil {
+				break
+			} else {
+				time.Sleep(time.Millisecond * time.Duration(i*100))
+				fmt.Printf("[ERROR] error : %v ouccred when update id: %s. Retry at %d times \n", err, data.(string), i)
+			}
 		}
+
 	}
 }
 

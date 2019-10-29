@@ -56,6 +56,8 @@ func (m *Mgr) process(wg *sync.WaitGroup, modeType int) {
 		m.modifyImport(wg)
 	case ITEM:
 		m.itemImport(wg)
+	case ITEM_HIS:
+		m.itemHisImport(wg)
 	}
 }
 
@@ -109,19 +111,39 @@ func (m *Mgr) itemImport(wg *sync.WaitGroup) {
 					model["channels"] = resetChannels(channels)
 				}
 
-				//props := model["properties"].(map[string]interface{})
-				//props["description"] = model["description"]
-				//model["properties"] = props
-				//
-				//delete(model, "description")
-				delete(model, "createdBy")
-				delete(model, "updatedBy")
 				delete(model, "type")
 
-				//model = G_item_rebuild_func_map[itemType](model)
 				insert(G_item_rebuild_func_map[itemType](model),
 					m.repo.DbName,
 					G_ItemCollectionMap[itemType])
+			}
+		}
+	}
+}
+
+func (m *Mgr) itemHisImport(wg *sync.WaitGroup) {
+	defer func() {
+		wg.Done()
+		if r := recover(); r != nil {
+			fmt.Printf("[ERROR] catch a panic in itemImport err: %v", r)
+		}
+	}()
+
+	for value := range m.parser.DataCh {
+		if model, err := m.repo.BuildItemModel(value); err != nil {
+			fmt.Printf("[ERROR] build model err: %v \n", err)
+			continue
+		} else {
+			if len(model) != 0 {
+				modelRebuilt, itemType, e := rebuildItemModel(model)
+				if e != nil {
+					fmt.Printf("[ERROR] itemHisImport err: %v ", e)
+					continue
+				}
+
+				insert(G_item_rebuild_func_map[itemType](modelRebuilt),
+					m.repo.DbName,
+					G_ItemCollection_His_Map[itemType])
 			}
 		}
 	}
@@ -133,6 +155,24 @@ func insert(model map[string]interface{}, dbName, collection string) {
 	if err := session.DB(dbName).C(collection).Insert(model); err != nil {
 		fmt.Printf("[ERROR] insert err :%v ", err)
 	}
+}
+
+func rebuildItemModel(model map[string]interface{}) (map[string]interface{}, string, error) {
+
+	itemType := model["type"].(string)
+	if "APP" != itemType && "IAP" != itemType {
+		//fmt.Printf("[ERROR] item has wrong type: %s! should be APP or IAP. ", model["type"].(string))
+		return nil, "", fmt.Errorf("item has wrong type: %s! should be APP or IAP. ", model["type"].(string))
+	}
+
+	channels, ok := model["channels"].(map[string]interface{})
+	if ok {
+		model["channels"] = resetChannels(channels)
+	}
+
+	delete(model, "type")
+
+	return model, itemType, nil
 }
 
 func modify(id string, model map[string]interface{}, dbName, collection string) {

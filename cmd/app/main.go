@@ -31,13 +31,14 @@ var (
 	// may not need this variable.
 	isModifyFieldsModel = kingpin.Flag("modify", "modify some filed in mongo").Bool()
 
-	isItem = kingpin.Flag("item", "import item data specially").Bool()
+	isItem    = kingpin.Flag("item", "import item data specially").Bool()
+	isItemHis = kingpin.Flag("itemHis", "import item history data specially").Bool()
 
 	IDMode           = kingpin.Flag("id", "change program mode into id mode.").Bool()
 	IDSelfCollection = kingpin.Flag("id-self", " use new ObjectID replace filed id in one collection").Bool()
 
-	limitation = kingpin.Flag("limit", "channel size limitation while parsing file").Default("600").Int()
-	size       = kingpin.Flag("size", "number of processing data goroutines").Default("6").Int()
+	limitation = kingpin.Flag("limit", "channel size limitation while parsing file").Default("30").Int()
+	size       = kingpin.Flag("size", "number of processing data goroutines").Default("3").Int()
 	readerSize = kingpin.Flag("readerSize", "reader buffer size").Default("4096").Int()
 )
 
@@ -49,9 +50,10 @@ func init() {
 	kingpin.Parse()
 
 	if *IDMode {
+		fmt.Println("[INFO] mode: idMode")
 		Run = changeIDMode
 	} else {
-		fmt.Println("[DEBUG] importMode?")
+		fmt.Println("[INFO] mode: importMode")
 		Run = importMode
 	}
 }

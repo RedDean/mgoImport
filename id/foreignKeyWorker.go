@@ -5,7 +5,10 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"mgoImport"
 	"sync"
+	"time"
 )
+
+const RETRY_TIMES = 3
 
 type ForeignKeyWorker struct {
 	collections   []string
@@ -32,10 +35,13 @@ func (f ForeignKeyWorker) Do(dataCh <-chan interface{}, swg *sync.WaitGroup) {
 			return
 		}
 
-		idObj := data.(ForeignKeyIdObj)
-		if err := f.updateID(idObj); err != nil {
-			fmt.Printf("[ERROR] error : %v ouccred when update id: %s", err, data.(string))
-			continue
+		for i := 1; i <= RETRY_TIMES; i++ {
+			if err := f.updateID(data.(ForeignKeyIdObj)); err == nil {
+				break
+			} else {
+				time.Sleep(time.Second * time.Duration(i))
+				fmt.Printf("[ERROR] error : %v ouccred when update id: %s. Retry times: %d  \n", err, data.(ForeignKeyIdObj).OriginalID, i)
+			}
 		}
 	}
 }
@@ -56,11 +62,10 @@ func (f ForeignKeyWorker) updateID(obj ForeignKeyIdObj) error {
 			},
 		}
 
-		//fmt.Printf("[DEBUG] foreign column :%s, originald: %s \n", foreign_col, obj.OriginalID )
 		_, err := session.DB(mgoImport.G_DBname).C(foreign_col).UpdateAll(where, set)
 		if err != nil {
-			fmt.Printf("[ERROR] can't update collection: %s, originalId: %s", foreign_col, obj.OriginalID)
-			continue
+			fmt.Printf("[ERROR] err:%v, can't update collection: %s, originalId: %s", foreign_col, obj.OriginalID)
+			return err
 		}
 	}
 
