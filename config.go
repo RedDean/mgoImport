@@ -1,6 +1,7 @@
 package mgoImport
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -8,6 +9,8 @@ import (
 )
 
 //var G_config *ConfigFile
+
+const CONFIG_CONTENT_LENGTH = 4096
 
 type ConfigFile struct {
 	DataColumns []string          `json:"data_columns"`
@@ -18,6 +21,8 @@ type ConfigFile struct {
 
 	ModifiedColumn string `json:"modified_column"`
 	ID             IDconf `json:"id"`
+
+	Enums []EnumNode `json:"enums"`
 }
 
 type DbConfig struct {
@@ -33,26 +38,61 @@ type IDconf struct {
 	Collections   []string `json:"collections"`
 }
 
-func InitConfig(dir string) *ConfigFile {
-	fmt.Printf("[INFO] config dir is %s \n", dir)
+type EnumNode struct {
+	CollectionName string `json:"collection_name,omitempty"`
+	EnumColumn     string `json:"enum_column,omitempty"`
+	OldValue       string `json:"old_value,omitempty"`
+	NewValue       string `json:"new_value,omitempty"`
+}
 
+func InitConfig(normalDir, dbConfigDir string) *ConfigFile {
+	fmt.Printf("[INFO] config dir is %s \n", normalDir)
+
+	config := &ConfigFile{}
+	if err := config.load(readFile(normalDir)); err != nil {
+		panic(err)
+	}
+
+	if err := config.loadDBConf(readFile(dbConfigDir)); err != nil {
+		panic(err)
+	}
+
+	return config
+}
+
+func readFile(dir string) *bytes.Buffer {
 	file, err := os.OpenFile(dir, os.O_RDONLY, 0666)
 	if err != nil {
 		panic(err)
 	}
 	defer file.Close()
 
-	config := &ConfigFile{}
-	if err := config.LoadJson(file); err != nil {
+	contentBytes := make([]byte, CONFIG_CONTENT_LENGTH)
+	_, err = file.Read(contentBytes)
+	if err != nil {
 		panic(err)
 	}
-	return config
+
+	return bytes.NewBuffer(contentBytes)
 }
 
-func (cf *ConfigFile) LoadJson(data io.Reader) error {
+func (cf *ConfigFile) loadDBConf(data io.Reader) error {
+	if err := json.NewDecoder(data).Decode(&cf.Db); err != nil {
+		return err
+	}
+
+	fmt.Println("[debug] ", cf.Db)
+	return nil
+}
+
+func (cf *ConfigFile) load(data io.Reader) error {
 	return json.NewDecoder(data).Decode(cf)
 }
 
 func (cf *ConfigFile) GetIDConf() IDconf {
 	return cf.ID
+}
+
+func (cf *ConfigFile) GetEnumNodeArray() []EnumNode {
+	return cf.Enums
 }

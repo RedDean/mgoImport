@@ -65,7 +65,7 @@ func (m *Mgr) normalImport(wg *sync.WaitGroup) {
 	defer wg.Done()
 	for value := range m.parser.DataCh {
 		if model, err := m.repo.BuildModel(value); err != nil {
-			//fmt.Printf("[ERROR] build model err: %v \n", err)
+			fmt.Printf("[ERROR] build model err: %v \n", err)
 			continue
 		} else {
 			if len(model) != 0 {
@@ -90,16 +90,23 @@ func (m *Mgr) itemImport(wg *sync.WaitGroup) {
 	defer func() {
 		wg.Done()
 		if r := recover(); r != nil {
-			fmt.Printf("[ERROR] catch a panic in itemImport err: %v", r)
+			fmt.Printf("[ERROR] catch a panic in itemImport err: %v \n", r)
 		}
+		//debug.PrintStack()
 	}()
 
 	for value := range m.parser.DataCh {
 		if model, err := m.repo.BuildItemModel(value); err != nil {
-			//fmt.Printf("[ERROR] build model err: %v \n", err)
+			fmt.Printf("[ERROR] build model err: %v \n", err)
 			continue
 		} else {
 			if len(model) != 0 {
+
+				if _, ok := model["type"]; !ok {
+					fmt.Printf("[ERROR] invaild string : %s \n", value)
+					continue
+				}
+
 				itemType := model["type"].(string)
 				if "APP" != itemType && "IAP" != itemType {
 					fmt.Printf("[ERROR] item has wrong type: %s! should be APP or IAP. ", model["type"].(string))
@@ -125,7 +132,7 @@ func (m *Mgr) itemHisImport(wg *sync.WaitGroup) {
 	defer func() {
 		wg.Done()
 		if r := recover(); r != nil {
-			fmt.Printf("[ERROR] catch a panic in itemImport err: %v", r)
+			fmt.Printf("[ERROR] catch a panic in itemImport err: %v \n", r)
 		}
 	}()
 

@@ -7,6 +7,8 @@ import (
 	"runtime"
 )
 
+const DefaultChunkSize = 4096
+
 type IDloader struct {
 	targetCollection string
 	targetColumn     string
@@ -75,12 +77,11 @@ func DivideIntoSmallChunks(data []interface{}) [][]interface{} {
 	}
 	//
 	var (
-		divided [][]interface{}
-		numCPU  int
+		divided   [][]interface{}
+		chunkSize int
 	)
-
-	numCPU = runtime.NumCPU()
-	chunkSize := (dataLength + numCPU - 1) / numCPU
+	chunkSize = getChunkSize(dataLength)
+	fmt.Printf("[INFO] size of each data chunk %d \n", chunkSize)
 	// for test mock
 	// chunkSize := 4
 
@@ -95,4 +96,13 @@ func DivideIntoSmallChunks(data []interface{}) [][]interface{} {
 	}
 
 	return divided
+}
+
+func getChunkSize(dataLength int) int {
+
+	numCPU := runtime.NumCPU()
+	if numCPU == 1 {
+		return DefaultChunkSize
+	}
+	return (dataLength + numCPU - 1) / numCPU
 }

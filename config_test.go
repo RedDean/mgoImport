@@ -15,7 +15,7 @@ func TestConfigFile(t *testing.T) {
 		file, err := os.OpenFile(dir, os.O_RDONLY, 0666)
 		testUtil.AssertNoError(t, err)
 
-		if err := cf.LoadJson(file); err != nil {
+		if err := cf.load(file); err != nil {
 			t.Fatalf("load json err: %v", err)
 		}
 

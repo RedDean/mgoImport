@@ -98,6 +98,7 @@ func (r Repository) BuildModel(input []string) (map[string]interface{}, error) {
 		inputVal := input[i]
 		props := r.Properties[i]
 		if err = dataMap.setDataMapValue(props.FieldType, props.FieldName, inputVal); err != nil {
+			fmt.Println("[DEBUG] type ", props.FieldType, " name ", props.FieldName, " input: ", inputVal)
 			return nil, err
 		}
 	}
@@ -130,14 +131,6 @@ func (r Repository) BuildItemModel(input []string) (map[string]interface{}, erro
 	for i := range input {
 		inputVal := input[i]
 		props := r.Properties[i]
-
-		//if "description" == props.FieldName {
-		//	// correct quote in string
-		//	if "" != inputVal {
-		//		inputVal = inputVal[2:len(inputVal)-2]
-		//		inputVal = strings.ReplaceAll(inputVal, `"`,`\"`)
-		//	}
-		//}
 
 		if err = dataMap.setDataMapValue(props.FieldType, props.FieldName, inputVal); err != nil {
 			return nil, err
@@ -199,14 +192,25 @@ func (dm *dataModel) setDataMapValue(fileType, fieldName, input string) error {
 		for k, v := range m {
 
 			// In case that field in json override filed that has same name in dataMap.
-			if _, ok := dm._map[k]; !ok {
+			if _, ok := dm._map[k]; !ok || dm._map[k] == nil {
 				dm._map[k] = v
 			}
 		}
 
 	case "date":
+		if input == "" {
+			return nil
+		}
 		var t time.Time
 		t, err = time.Parse("2006-01-02 15:04:05+00", input)
+		dm._map[fieldName] = t
+
+	case "date-iso": // for js date format -> iso8601
+		if input == "" {
+			return nil
+		}
+		var t time.Time
+		t, err = time.Parse("2006-01-02T15:04:05.000Z", input)
 		dm._map[fieldName] = t
 
 	case "bool":

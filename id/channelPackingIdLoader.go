@@ -6,7 +6,7 @@ import (
 	"mgoImport"
 )
 
-type ForeignKeyLoader struct {
+type ChannelForeignKeyLoader struct {
 	mainCollection string
 	relatedColumn  string
 	idColumn       string
@@ -15,13 +15,14 @@ type ForeignKeyLoader struct {
 	dataLength int
 }
 
-type ForeignKeyIdObj struct {
-	ID         bson.ObjectId `bson:"_id"`
-	OriginalID string        `bson:"originalId"`
+type ChannelForeignKeyIdObj struct {
+	ID          bson.ObjectId `bson:"_id"`
+	OriginalID  string        `bson:"originalId"`
+	ChannelName string        `bson:"channelName"`
 }
 
-func NewForeignKeyLoader(collection string, column string, idColumn string) *ForeignKeyLoader {
-	return &ForeignKeyLoader{
+func NewChannelForeignKeyLoader(collection string, column string, idColumn string) *ChannelForeignKeyLoader {
+	return &ChannelForeignKeyLoader{
 		idColumn:       idColumn,
 		relatedColumn:  column,
 		mainCollection: collection,
@@ -29,30 +30,32 @@ func NewForeignKeyLoader(collection string, column string, idColumn string) *For
 	}
 }
 
-func (f ForeignKeyLoader) GetData() []interface{} {
+func (f ChannelForeignKeyLoader) GetData() []interface{} {
 	return f.data
 }
 
-func (f *ForeignKeyLoader) Load() {
+func (f *ChannelForeignKeyLoader) Load() {
 	db := mgoImport.GetDb()
 	defer db.Close()
 
 	query := []bson.M{
 		{"$match": bson.M{
 			f.relatedColumn: bson.M{"$ne": ""},
+			"channelName":   bson.M{"$nin": []string{"GSTORE", "AMAZON", "GOOGLE"}},
 		},
 		},
 		{
-			"$group": bson.M{
-				"_id":        "$" + f.idColumn,
-				"originalId": bson.M{"$first": "$" + f.relatedColumn},
+			"$project": bson.M{
+				"_id":         1,
+				"originalId":  1,
+				"channelName": 1,
 			},
 		},
 	}
 
 	pipe := db.DB(mgoImport.G_DBname).C(f.mainCollection).Pipe(query)
 
-	var results []ForeignKeyIdObj
+	var results []ChannelForeignKeyIdObj
 
 	if err := pipe.All(&results); err != nil {
 		panic(fmt.Errorf("load err failed! %w", err))

@@ -8,14 +8,14 @@ import (
 var G_session *mgo.Session
 var G_DBname string
 
-func InitMgoCli(url string, dbName string) error {
+func InitMgoCli(db DbConfig) error {
 
 	//mongdbUrl = fmt.Sprintf("mongodb://%s:%s@%s", username, password, Url)
-	if cli, err := mgo.Dial(url); err != nil {
+	if cli, err := mgo.Dial(db.Url); err != nil {
 		return err
 	} else {
 		G_session = cli
-		G_DBname = dbName
+		G_DBname = db.Name
 
 		G_session.SetPoolLimit(50)
 	}

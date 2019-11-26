@@ -2,15 +2,16 @@ package mgoImport
 
 import (
 	"bufio"
+	"encoding/csv"
 	"errors"
 	"fmt"
 	"io"
 	"os"
-	"strings"
 )
 
 type DataParser struct {
-	buf    *bufio.Reader
+	//buf    *bufio.Reader
+	buf    *csv.Reader
 	DataCh chan []string
 	deli   string
 }
@@ -34,8 +35,13 @@ func InitParser(fileDir string, limit int, deli string, readerSize int) (*DataPa
 
 func NewDataParser(reader io.Reader, size int, deli string, readerSize int) *DataParser {
 
+	r := csv.NewReader(bufio.NewReaderSize(reader, readerSize))
+	r.Comma = '\t'
+	r.LazyQuotes = true
+	r.FieldsPerRecord = 0
+
 	return &DataParser{
-		buf:    bufio.NewReaderSize(reader, readerSize),
+		buf:    r,
 		DataCh: make(chan []string, size),
 		deli:   deli,
 	}
@@ -45,14 +51,20 @@ func (d *DataParser) readLine() (err error) {
 	var counter int
 	defer close(d.DataCh)
 	for {
-		data, _, err := d.buf.ReadLine()
+		data, err := d.buf.Read()
 		if err == io.EOF {
 			break
 		}
 		if len(data) == 0 {
 			continue
 		}
-		d.DataCh <- strings.Split(string(data), d.deli)
+
+		if err != nil {
+			fmt.Println("[ERROR] csv parse failed! err:   ", err, " data:", data)
+			continue
+		}
+
+		d.DataCh <- data
 
 		if counter == 1000 {
 			counter = 0

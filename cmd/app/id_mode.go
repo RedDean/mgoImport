@@ -10,11 +10,9 @@ import (
 
 // replace id mode
 const (
-	SELF_REPLACE = iota
+	SELF_REPLACE = iota + 1
 	MULTI_REPLACE
 )
-
-const WORKERNUM = 1
 
 func changeIDMode(conf *mgoImport.ConfigFile) {
 	var (
@@ -28,6 +26,8 @@ func changeIDMode(conf *mgoImport.ConfigFile) {
 	// 1. get distinct id
 	fmt.Println("[INFO] start to get ids.")
 	data = getLoadData(conf)
+
+	fmt.Printf("[INFO] number of chunks: %d \n", len(data))
 
 	// 2. get worker
 	fmt.Println("[INFO] get worker.")
@@ -59,6 +59,8 @@ func getLoadData(conf *mgoImport.ConfigFile) [][]interface{} {
 
 	if *IDSelfCollection {
 		loader = id.NewIDLoader(idConf.Collections[0], idConf.RelatedColumn)
+	} else if *IDChPacking {
+		loader = id.NewChannelForeignKeyLoader(idConf.Collections[0], idConf.RelatedColumn, idConf.IdColumn)
 	} else {
 		loader = id.NewForeignKeyLoader(idConf.Collections[0], idConf.RelatedColumn, idConf.IdColumn)
 	}
@@ -73,8 +75,10 @@ func getWorker(conf *mgoImport.ConfigFile) id.Worker {
 	idConf := conf.GetIDConf()
 	if *IDSelfCollection {
 		worker = id.NewIDWorker(idConf.Collections[0], idConf.RelatedColumn)
+	} else if *IDChPacking {
+		worker = id.NewChannelPackingIdWorker(idConf.Collections[1], idConf.ForeignColumn)
 	} else {
-		worker = id.NewForeignKeyWorker(idConf.Collections[1:], idConf.RelatedColumn, idConf.ForeignColumn)
+		worker = id.NewForeignKeyWorker(idConf.Collections[1:], idConf.ForeignColumn)
 	}
 
 	return worker
@@ -89,12 +93,13 @@ func producer(wg *sync.WaitGroup, taskCh <-chan []interface{}, worker id.Worker)
 		}
 
 		swg := sync.WaitGroup{}
-		swg.Add(WORKERNUM)
+		swg.Add(G_WORKERNUM)
 
 		workerCh := make(chan interface{})
-		for i := 0; i < WORKERNUM; i++ {
+		for i := 0; i < G_WORKERNUM; i++ {
 			go worker.Do(workerCh, &swg)
 		}
+
 		for _, value := range task {
 			workerCh <- value
 		}

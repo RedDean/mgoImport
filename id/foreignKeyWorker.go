@@ -12,17 +12,15 @@ const RETRY_TIMES = 3
 
 type ForeignKeyWorker struct {
 	collections   []string
-	relatedColumn string
 	foreignColumn string
 }
 
-func NewForeignKeyWorker(collections []string, relatedColumn, foreignColumn string) *ForeignKeyWorker {
+func NewForeignKeyWorker(collections []string, foreignColumn string) *ForeignKeyWorker {
 	if len(collections) == 0 {
 		panic(fmt.Errorf("collection slice is empty, this is required"))
 	}
 	return &ForeignKeyWorker{
 		collections:   collections,
-		relatedColumn: relatedColumn,
 		foreignColumn: foreignColumn,
 	}
 }
