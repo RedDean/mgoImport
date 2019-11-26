@@ -38,7 +38,7 @@ func (f ForeignKeyWorker) Do(dataCh <-chan interface{}, swg *sync.WaitGroup) {
 				break
 			} else {
 				time.Sleep(time.Second * time.Duration(i))
-				fmt.Printf("[ERROR] error : %v ouccred when update id: %s. Retry times: %d  \n", err, data.(ForeignKeyIdObj).OriginalID, i)
+				fmt.Printf("[ERROR] error : %v ouccred when batchUpdate id: %s. Retry times: %d  \n", err, data.(ForeignKeyIdObj).OriginalID, i)
 			}
 		}
 	}
@@ -48,7 +48,7 @@ func (f ForeignKeyWorker) updateID(obj ForeignKeyIdObj) error {
 	session := mgoImport.GetDb()
 	defer session.Close()
 
-	for _, foreign_col := range f.collections {
+	for _, foreignCol := range f.collections {
 
 		where := bson.M{
 			f.foreignColumn: obj.OriginalID,
@@ -60,9 +60,9 @@ func (f ForeignKeyWorker) updateID(obj ForeignKeyIdObj) error {
 			},
 		}
 
-		_, err := session.DB(mgoImport.G_DBname).C(foreign_col).UpdateAll(where, set)
+		_, err := session.DB(mgoImport.G_DBname).C(foreignCol).UpdateAll(where, set)
 		if err != nil {
-			fmt.Printf("[ERROR] err:%v, can't update collection: %s, originalId: %s", foreign_col, obj.OriginalID)
+			fmt.Printf("[ERROR] err:%v, can't batchUpdate collection: %s, originalId: %s", foreignCol, obj.OriginalID)
 			return err
 		}
 	}

@@ -40,8 +40,8 @@ var (
 
 	enum = kingpin.Flag("enum", "replace enum value").Bool()
 
-	limitation = kingpin.Flag("limit", "channel size limitation while parsing file").Default("30").Int()
-	size       = kingpin.Flag("size", "number of processing data goroutines").Default("3").Int()
+	limitation = kingpin.Flag("limit", "buffer size limitation while parsing file").Default("30").Int()
+	size       = kingpin.Flag("size", "number of processing data workers in import mode").Default("3").Int()
 	readerSize = kingpin.Flag("readerSize", "reader buffer size").Default("4096").Int()
 
 	idWorkers = kingpin.Flag("idWorkers", " id substitution process goroutine number").Default("1").Int()
@@ -65,7 +65,6 @@ func init() {
 	}
 
 	if *IDMode {
-		fmt.Println("[INFO] mode: replace id mode")
 		Run = changeIDMode
 		fmt.Println("[debug] idWorkers", *idWorkers)
 		G_WORKERNUM = *idWorkers
@@ -73,12 +72,10 @@ func init() {
 	}
 
 	if *enum {
-		fmt.Println("[INFO] mode: replace enum mode")
 		Run = enumMode
 		return
 	}
 
-	fmt.Println("[INFO] mode: import data mode")
 	Run = importMode
 }
 

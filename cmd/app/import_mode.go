@@ -1,8 +1,13 @@
 package main
 
-import "mgoImport"
+import (
+	"fmt"
+	"mgoImport"
+)
 
 func importMode(c *mgoImport.ConfigFile) {
+	fmt.Println("[INFO] mode: import data mode")
+
 	p, err := mgoImport.InitParser(*fileDir, *limitation, c.Delimiter, *readerSize)
 	if err != nil {
 		panic(err)

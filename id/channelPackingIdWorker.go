@@ -47,7 +47,7 @@ func (f ChannelPackingIdWorker) Do(dataCh <-chan interface{}, swg *sync.WaitGrou
 				break
 			} else {
 				time.Sleep(time.Second * time.Duration(i))
-				fmt.Printf("[ERROR] error : %v ouccred when update id: %s. Retry times: %d  \n", err, data.(ForeignKeyIdObj).OriginalID, i)
+				fmt.Printf("[ERROR] error : %v ouccred when batchUpdate id: %s. Retry times: %d  \n", err, data.(ForeignKeyIdObj).OriginalID, i)
 			}
 		}
 	}
@@ -69,7 +69,7 @@ func (f ChannelPackingIdWorker) updateID(obj ChannelForeignKeyIdObj) error {
 
 	_, err := session.DB(mgoImport.G_DBname).C(f.collection).UpdateAll(where, set)
 	if err != nil {
-		fmt.Printf("[ERROR] err:%v, can't update store: %s, originalId: %s \n", err, obj.ChannelName, obj.OriginalID)
+		fmt.Printf("[ERROR] err:%v, can't batchUpdate store: %s, originalId: %s \n", err, obj.ChannelName, obj.OriginalID)
 		return err
 	}
 

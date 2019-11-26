@@ -14,12 +14,23 @@ const (
 	MULTI_REPLACE
 )
 
+type Loader interface {
+	// load disctinct ids
+	Load()
+	GetData() []interface{}
+}
+
+type Worker interface {
+	Do(<-chan interface{}, *sync.WaitGroup)
+}
+
 func changeIDMode(conf *mgoImport.ConfigFile) {
+	fmt.Println("[INFO] mode: replace id mode")
 	var (
 		data   [][]interface{}
 		wg     sync.WaitGroup
 		taskCh chan []interface{}
-		worker id.Worker
+		worker Worker
 	)
 
 	startTime := time.Now()
@@ -53,7 +64,7 @@ func changeIDMode(conf *mgoImport.ConfigFile) {
 }
 
 func getLoadData(conf *mgoImport.ConfigFile) [][]interface{} {
-	var loader id.Loader
+	var loader Loader
 
 	idConf := conf.GetIDConf()
 
@@ -69,8 +80,8 @@ func getLoadData(conf *mgoImport.ConfigFile) [][]interface{} {
 	return id.DivideIntoSmallChunks(loader.GetData())
 }
 
-func getWorker(conf *mgoImport.ConfigFile) id.Worker {
-	var worker id.Worker
+func getWorker(conf *mgoImport.ConfigFile) Worker {
+	var worker Worker
 
 	idConf := conf.GetIDConf()
 	if *IDSelfCollection {
@@ -84,7 +95,7 @@ func getWorker(conf *mgoImport.ConfigFile) id.Worker {
 	return worker
 }
 
-func producer(wg *sync.WaitGroup, taskCh <-chan []interface{}, worker id.Worker) {
+func producer(wg *sync.WaitGroup, taskCh <-chan []interface{}, worker Worker) {
 	defer wg.Done()
 	for {
 		task, ok := <-taskCh

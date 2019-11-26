@@ -8,7 +8,7 @@ import (
 )
 
 func enumMode(config *mgoImport.ConfigFile) {
-
+	fmt.Println("[INFO] mode: replace enum mode")
 	startTime := time.Now()
 
 	enums := config.GetEnumNodeArray()
