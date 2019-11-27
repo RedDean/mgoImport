@@ -3,9 +3,7 @@ package id
 import (
 	"fmt"
 	"gopkg.in/mgo.v2/bson"
-	"mgoImport"
 	"sync"
-	"time"
 )
 
 const RETRY_TIMES = 3
@@ -26,46 +24,39 @@ func NewForeignKeyWorker(collections []string, foreignColumn string) *ForeignKey
 }
 
 func (f ForeignKeyWorker) Do(dataCh <-chan interface{}, swg *sync.WaitGroup) {
-	defer swg.Done()
+	poolMap := make(map[string]*UpdateBatchPool, len(f.collections))
+	for k := range f.collections {
+		poolMap[f.collections[k]] = NewUpdateBatchPool(DefaultPoolSize, f.collections[k])
+	}
+
+	defer func() {
+		for _, p := range poolMap {
+			p.Clean()
+		}
+		swg.Done()
+	}()
+
 	for {
 		data, ok := <-dataCh
 		if !ok {
 			return
 		}
 
-		for i := 1; i <= RETRY_TIMES; i++ {
-			if err := f.updateID(data.(ForeignKeyIdObj)); err == nil {
-				break
-			} else {
-				time.Sleep(time.Second * time.Duration(i))
-				fmt.Printf("[ERROR] error : %v ouccred when batchUpdate id: %s. Retry times: %d  \n", err, data.(ForeignKeyIdObj).OriginalID, i)
-			}
+		for _, p := range poolMap {
+			p.Add(f.buildUpdateOpsObj(data.(ForeignKeyIdObj)))
 		}
 	}
 }
 
-func (f ForeignKeyWorker) updateID(obj ForeignKeyIdObj) error {
-	session := mgoImport.GetDb()
-	defer session.Close()
-
-	for _, foreignCol := range f.collections {
-
-		where := bson.M{
+func (f ForeignKeyWorker) buildUpdateOpsObj(obj ForeignKeyIdObj) *updateObj {
+	return &updateObj{
+		selector: bson.M{
 			f.foreignColumn: obj.OriginalID,
-		}
-
-		set := bson.M{
+		},
+		setter: bson.M{
 			"$set": bson.M{
 				f.foreignColumn: obj.ID,
 			},
-		}
-
-		_, err := session.DB(mgoImport.G_DBname).C(foreignCol).UpdateAll(where, set)
-		if err != nil {
-			fmt.Printf("[ERROR] err:%v, can't batchUpdate collection: %s, originalId: %s", foreignCol, obj.OriginalID)
-			return err
-		}
+		},
 	}
-
-	return nil
 }

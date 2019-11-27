@@ -8,20 +8,19 @@ import (
 type IDWorker struct {
 	collection   string
 	targetColumn string
-	pool         *UpdateBatchPool
 }
 
 func NewIDWorker(collection, column string) *IDWorker {
 	return &IDWorker{
 		collection:   collection,
 		targetColumn: column,
-		pool:         NewUpdateBatchPool(30, collection),
 	}
 }
 
 func (w IDWorker) Do(dataCh <-chan interface{}, swg *sync.WaitGroup) {
+	pool := NewUpdateBatchPool(DefaultPoolSize, w.collection)
 	defer func() {
-		w.pool.Clean()
+		pool.Clean()
 		swg.Done()
 	}()
 
@@ -30,7 +29,7 @@ func (w IDWorker) Do(dataCh <-chan interface{}, swg *sync.WaitGroup) {
 		if !ok {
 			return
 		}
-		w.pool.Add(w.buildUpdateOpsObj(data.(string)))
+		pool.Add(w.buildUpdateOpsObj(data.(string)))
 	}
 }
 
